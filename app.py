@@ -1,4 +1,4 @@
-from flask import Flask, render_template, g, request, jsonify
+from flask import Flask, render_template, g, request, jsonify, redirect, url_for
 import sqlite3
 import os
 
@@ -96,6 +96,44 @@ def api_search():
     ]
     return jsonify(results=results)
 
+
+# --- Request form and admin routes ---
+
+@app.route('/request', methods=['POST'])
+def submit_request():
+    db = get_db()
+    db.execute(
+        "INSERT INTO requests (object_id, name, phone, email, comment) VALUES (?,?,?,?,?)",
+        (
+            request.form.get('object_id'),
+            request.form.get('name'),
+            request.form.get('phone'),
+            request.form.get('email'),
+            request.form.get('comment')
+        )
+    )
+    db.commit()
+    return redirect(url_for('index'))
+
+@app.route('/admin/requests')
+def admin_requests():
+    db = get_db()
+    rows = db.execute(
+        """SELECT r.id, o.title, r.name, r.phone, r.email, r.comment, r.status
+           FROM requests r
+           JOIN objects o ON o.id = r.object_id
+           ORDER BY r.id DESC"""
+    ).fetchall()
+    return render_template('admin_requests.html', rows=rows)
+
+@app.route('/admin/close/<int:req_id>')
+def admin_close(req_id):
+    db = get_db()
+    db.execute("UPDATE requests SET status='closed' WHERE id=?", (req_id,))
+    db.commit()
+    return redirect(url_for('admin_requests'))
+
+
 @app.route('/object/<int:obj_id>')
 def object_detail(obj_id):
     db = get_db()
@@ -133,6 +171,17 @@ if __name__ == '__main__':
                 featured INTEGER DEFAULT 0
             )
         """)
+        cur.execute("""
+            CREATE TABLE requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                object_id INTEGER,
+                name TEXT,
+                phone TEXT,
+                email TEXT,
+                comment TEXT,
+                status TEXT DEFAULT 'open'
+            )
+        """)
         # Пример данных
         cur.executemany(
             "INSERT INTO objects (title, type, price, image_url, images, address, area, layout, description, lat, lon, featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -165,4 +214,7 @@ if __name__ == '__main__':
         con.commit()
         con.close()
 
+    print("Главный сайт:  http://127.0.0.1:5000/")
+    print("Панель админа: http://127.0.0.1:5000/admin/requests")
     app.run(debug=True)
+
