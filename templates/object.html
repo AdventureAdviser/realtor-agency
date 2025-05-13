@@ -10,6 +10,7 @@
   </style>
 </head>
 <body>
+  <a href="/" class="btn btn-secondary ms-3 mt-3">← Назад</a>
   <div class="container my-5">
 
     <!-- Карусель фото -->
@@ -93,6 +94,12 @@
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
     L.marker([{{ obj.lat }}, {{ obj.lon }}]).addTo(map);
+  </script>
+  <script>
+    window.addEventListener('load', function () {
+      // плавно прокрутить на фиксированные 400 px вниз, чтобы карусель частично осталась видна
+      window.scrollTo({ top: 400, behavior: 'smooth' });
+    });
   </script>
 </body>
 </html>
