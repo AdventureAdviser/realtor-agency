@@ -8,7 +8,7 @@
 <body>
 <div class="container my-5">
   <h2>Редактировать объект #{{ obj.id }}</h2>
-  <form method="post" class="row g-3">
+  <form method="post" enctype="multipart/form-data" class="row g-3">
     <div class="col-md-6">
       <label class="form-label">Название</label>
       <input name="title" class="form-control" value="{{ obj.title }}">
@@ -32,6 +32,18 @@
     <div class="col-md-4">
       <label class="form-label">Планировка</label>
       <input name="layout" class="form-control" value="{{ obj.layout }}">
+    </div>
+    <input type="hidden" name="existing_image_url" value="{{ obj.image_url }}">
+    <div class="col-12">
+      <label class="form-label">Текущие фото</label><br>
+      {% for img in obj.images.split(',') %}
+        <img src="{{ img }}" alt="img" class="me-2 mb-2" style="height:80px;">
+      {% endfor %}
+      <input type="hidden" name="existing_images" value="{{ obj.images }}">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Загрузить новые фото (заменят текущие)</label>
+      <input type="file" name="photos" multiple class="form-control">
     </div>
     <div class="col-12">
       <label class="form-label">Описание</label>

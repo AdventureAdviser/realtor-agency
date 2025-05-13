@@ -1,10 +1,15 @@
 from flask import Flask, render_template, g, request, jsonify, redirect, url_for
+from werkzeug.utils import secure_filename
 import sqlite3
 import os
 
 app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, 'database.db')
+
+# --- Upload folder for images ---
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'img')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def get_db():
     if 'db' not in g:
@@ -145,8 +150,24 @@ def admin_objects():
 def admin_object_edit(obj_id):
     db = get_db()
     if request.method == 'POST':
+        # --- handle uploaded photos ---
+        photos = request.files.getlist('photos')
+        if photos and photos[0].filename:  # at least one file selected
+            image_url_new = None
+            new_paths = []
+            for file in photos:
+                filename = secure_filename(file.filename)
+                save_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(save_path)
+                new_paths.append(f"/static/img/{filename}")
+            if not image_url_new:
+                image_url_new = new_paths[0]  # first uploaded becomes main
+            images_csv = ",".join(new_paths)
+        else:
+            images_csv = request.form.get('existing_images', '')
+            image_url_new = request.form.get('existing_image_url')
         db.execute("""UPDATE objects SET title=?, type=?, price=?, address=?, area=?,
-                      layout=?, description=?, featured=? WHERE id=?""",
+                      layout=?, description=?, featured=?, images=?, image_url=? WHERE id=?""",
                    (
                        request.form.get('title'),
                        request.form.get('type'),
@@ -156,6 +177,8 @@ def admin_object_edit(obj_id):
                        request.form.get('layout'),
                        request.form.get('description'),
                        1 if request.form.get('featured') else 0,
+                       images_csv,
+                       image_url_new,
                        obj_id
                    ))
         db.commit()
