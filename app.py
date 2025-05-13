@@ -96,6 +96,21 @@ def api_search():
     ]
     return jsonify(results=results)
 
+@app.route('/object/<int:obj_id>')
+def object_detail(obj_id):
+    db = get_db()
+    obj = db.execute('SELECT * FROM objects WHERE id=?', (obj_id,)).fetchone()
+    if obj is None:
+        return "Object not found", 404
+
+    # Похожие объекты того же типа, кроме текущего
+    similar = db.execute(
+        'SELECT id, title, price, image_url FROM objects WHERE type=? AND id<>? LIMIT 4',
+        (obj['type'], obj_id)
+    ).fetchall()
+
+    return render_template('object.html', obj=obj, similar=similar)
+
 if __name__ == '__main__':
     # При первом запуске можно создать БД
     if not os.path.exists(DATABASE):
@@ -107,18 +122,47 @@ if __name__ == '__main__':
                 title TEXT,
                 type TEXT,
                 price TEXT,
-                image_url TEXT,
+                image_url TEXT,           -- главное фото
+                images TEXT,               -- CSV дополнительных фото
+                address TEXT,
+                area INTEGER,              -- площадь в м²
+                layout TEXT,               -- планировка/формат
+                description TEXT,
+                lat REAL,
+                lon REAL,
                 featured INTEGER DEFAULT 0
             )
         """)
         # Пример данных
         cur.executemany(
-            "INSERT INTO objects (title, type, price, image_url, featured) VALUES (?, ?, ?, ?, ?)", [
-            ("Офис в центре", "office", "от 50 000 ₽/мес", "/static/img/office1.jpg", 1),
-            ("Склад на окраине", "warehouse", "от 30 000 ₽/мес", "/static/img/warehouse1.jpg", 1),
-            ("Магазин у метро", "shop", "от 70 000 ₽/мес", "/static/img/shop1.jpg", 1),
-            ("Помещение open space", "openspace", "от 45 000 ₽/мес", "/static/img/openspace1.jpg", 1),
-        ])
+            "INSERT INTO objects (title, type, price, image_url, images, address, area, layout, description, lat, lon, featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                ("Офис в центре", "office", "от 50 000 ₽/мес", "/static/img/office1.jpg",
+                 "/static/img/office1.jpg,/static/img/office2.jpg",
+                 "Москва, ул. Пример 1", 120, "open space",
+                 "Современный светлый офис в бизнес‑центре класса A.",
+                 55.7558, 37.6176, 1),
+
+                ("Склад на окраине", "warehouse", "от 30 000 ₽/мес", "/static/img/warehouse1.jpg",
+                 "/static/img/warehouse1.jpg",
+                 "Москва, проезд Складской 5", 300, "cold storage",
+                 "Высокие потолки, удобный подъезд для фур.",
+                 55.8000, 37.7000, 1),
+
+                ("Магазин у метро", "shop", "от 70 000 ₽/мес", "/static/img/shop1.jpg",
+                 "/static/img/shop1.jpg",
+                 "Москва, ул. Торговая 12", 80, "street retail",
+                 "Потоковое место, первая линия домов.",
+                 55.7600, 37.6200, 1),
+
+                ("Помещение open space", "openspace", "от 45 000 ₽/мес", "/static/img/openspace1.jpg",
+                 "/static/img/openspace1.jpg",
+                 "Москва, ул. Стартапов 3", 110, "open space",
+                 "Гибкая планировка, натуральное освещение.",
+                 55.7700, 37.6300, 1),
+            ]
+        )
         con.commit()
         con.close()
+
     app.run(debug=True)
