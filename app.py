@@ -140,6 +140,41 @@ def admin_close(req_id):
 
 # ---------- ADMIN OBJECTS (view / edit / delete) ----------
 
+@app.route('/admin/object/new', methods=['GET', 'POST'])
+def admin_object_new():
+    db = get_db()
+    if request.method == 'POST':
+        # файлы
+        photos = request.files.getlist('photos')
+        images_csv, image_url_new = "", ""
+        if photos and photos[0].filename:
+            paths = []
+            for file in photos:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                paths.append(f"/static/img/{filename}")
+            images_csv = ",".join(paths)
+            image_url_new = paths[0]       # первое фото = превью
+        db.execute("""INSERT INTO objects
+                      (title, type, price, address, area, layout,
+                       description, featured, images, image_url)
+                      VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                   (
+                       request.form.get('title'),
+                       request.form.get('type'),
+                       request.form.get('price'),
+                       request.form.get('address'),
+                       request.form.get('area'),
+                       request.form.get('layout'),
+                       request.form.get('description'),
+                       1 if request.form.get('featured') else 0,
+                       images_csv,
+                       image_url_new
+                   ))
+        db.commit()
+        return redirect(url_for('admin_objects'))
+    # GET
+    return render_template('admin_object_new.html')
 @app.route('/admin/objects')
 def admin_objects():
     db = get_db()

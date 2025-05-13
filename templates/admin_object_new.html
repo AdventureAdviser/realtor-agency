@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Добавить объект</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container my-5">
+  <h2>Добавить объект</h2>
+  <form method="post" enctype="multipart/form-data" class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Название</label>
+      <input name="title" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Тип</label>
+      <input name="type" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Цена</label>
+      <input name="price" class="form-control">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Адрес</label>
+      <input name="address" class="form-control">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Площадь, м²</label>
+      <input name="area" type="number" class="form-control">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Планировка</label>
+      <input name="layout" class="form-control">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Фото (одно или несколько)</label>
+      <input type="file" name="photos" multiple class="form-control">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Описание</label>
+      <textarea name="description" rows="4" class="form-control"></textarea>
+    </div>
+    <div class="col-12 form-check">
+      <input type="checkbox" name="featured" class="form-check-input" id="feat">
+      <label for="feat" class="form-check-label">Featured</label>
+    </div>
+    <div class="col-12">
+      <button class="btn btn-success">Сохранить</button>
+      <a href="/admin/objects" class="btn btn-secondary">Отмена</a>
+    </div>
+  </form>
+</div>
+</body>
+</html>
