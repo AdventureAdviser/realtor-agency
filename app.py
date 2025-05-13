@@ -133,7 +133,44 @@ def admin_close(req_id):
     db.commit()
     return redirect(url_for('admin_requests'))
 
+# ---------- ADMIN OBJECTS (view / edit / delete) ----------
 
+@app.route('/admin/objects')
+def admin_objects():
+    db = get_db()
+    objs = db.execute("SELECT id, title, type, price, featured FROM objects ORDER BY id DESC").fetchall()
+    return render_template('admin_objects.html', objs=objs)
+
+@app.route('/admin/object/<int:obj_id>/edit', methods=['GET', 'POST'])
+def admin_object_edit(obj_id):
+    db = get_db()
+    if request.method == 'POST':
+        db.execute("""UPDATE objects SET title=?, type=?, price=?, address=?, area=?,
+                      layout=?, description=?, featured=? WHERE id=?""",
+                   (
+                       request.form.get('title'),
+                       request.form.get('type'),
+                       request.form.get('price'),
+                       request.form.get('address'),
+                       request.form.get('area'),
+                       request.form.get('layout'),
+                       request.form.get('description'),
+                       1 if request.form.get('featured') else 0,
+                       obj_id
+                   ))
+        db.commit()
+        return redirect(url_for('admin_objects'))
+    obj = db.execute("SELECT * FROM objects WHERE id=?", (obj_id,)).fetchone()
+    if obj is None:
+        return "Object not found", 404
+    return render_template('admin_object_edit.html', obj=obj)
+
+@app.route('/admin/object/<int:obj_id>/delete')
+def admin_object_delete(obj_id):
+    db = get_db()
+    db.execute("DELETE FROM objects WHERE id=?", (obj_id,))
+    db.commit()
+    return redirect(url_for('admin_objects'))
 @app.route('/object/<int:obj_id>')
 def object_detail(obj_id):
     db = get_db()
