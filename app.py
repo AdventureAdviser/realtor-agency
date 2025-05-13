@@ -39,7 +39,7 @@ def index():
     obj_type = request.args.get('type', '').strip()
 
     # Формируем запрос
-    sql = 'SELECT id, title, price, image_url FROM objects WHERE 1=1'
+    sql = 'SELECT id, title, price, image_url, address FROM objects WHERE 1=1'
     params = []
     # Не фильтруем по q в SQL, фильтрация по q будет в Python ниже
     if min_price:
@@ -54,9 +54,9 @@ def index():
 
     # Выполняем SQL с фильтрами по цене и типу
     rows = db.execute(sql, params).fetchall()
-    # Фильтрация по части названия без учёта регистра
+    # Фильтрация по части названия или адресу без учёта регистра
     if q:
-        rows = [row for row in rows if q.lower() in row['title'].lower()]
+        rows = [row for row in rows if q.lower() in row['title'].lower() or q.lower() in row['address'].lower()]
     # Результат: либо отфильтрованные строки, либо избранные при пустых фильтрах
     filter_applied = bool(q or min_price or max_price or obj_type)
     results = rows if filter_applied else featured
@@ -76,7 +76,7 @@ def api_search():
     max_price = request.args.get('max_price', '').strip()
     obj_type = request.args.get('type', '').strip()
 
-    sql = 'SELECT id, title, price, image_url FROM objects WHERE 1=1'
+    sql = 'SELECT id, title, price, image_url, address FROM objects WHERE 1=1'
     params = []
     # Не фильтруем по q в SQL, фильтрация по q будет в Python ниже
     if min_price:
@@ -90,11 +90,11 @@ def api_search():
         params.append(obj_type)
 
     rows = db.execute(sql, params).fetchall() if params else db.execute(
-        'SELECT id, title, price, image_url FROM objects'
+        'SELECT id, title, price, image_url, address FROM objects'
     ).fetchall()
-    # Фильтрация по части названия без учёта регистра
+    # Фильтрация по части названия или адресу без учёта регистра
     if q:
-        rows = [row for row in rows if q.lower() in row['title'].lower()]
+        rows = [row for row in rows if q.lower() in row['title'].lower() or q.lower() in row['address'].lower()]
     results = [
         {'id': row['id'], 'title': row['title'], 'price': row['price'], 'image_url': row['image_url']}
         for row in rows
